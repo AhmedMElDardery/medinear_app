@@ -1,0 +1,21 @@
+{
+    "appTitle": "Medinear",
+    "home": "الرئيسية",
+    "search": "بحث",    
+    "profile": "الملف الشخصي",
+    "settings": "الإعدادات",
+    "welcomeMessage": "مرحبًا بك في Medinear!",
+    "description": "رفيقك الصحي الشخصي.",
+    "searchHint": "ابحث عن الأدوية، الأعراض، أو نصائح صحية...",
+    "noResults": "لم يتم العثور على نتائج. حاول مرة أخرى.",
+    "profileName": "الاسم",
+    "profileEmail": "البريد الإلكتروني",
+    "profilePhone": "رقم الهاتف",
+    "saveChanges": "حفظ التغييرات",
+    "settingsTitle": "الإعدادات",
+    "language": "اللغة",
+    "notifications": "الإشعارات",
+    "privacyPolicy": "سياسة الخصوصية",
+    "termsofservice": "شروط الخدمة"
+
+}
