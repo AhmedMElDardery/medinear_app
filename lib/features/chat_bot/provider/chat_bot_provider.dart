@@ -5,11 +5,13 @@ import 'package:medinear_app/core/services/gemini_service.dart';
 import 'package:medinear_app/core/services/groq_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/datasources/chat_bot_remote_data_source.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 class ChatBotProvider extends ChangeNotifier {
   // الخدمات القديمة بتاعت الذكاء الاصطناعي زي ما هي
   final GeminiService _geminiService = GeminiService();
   final GroqService _groqService = GroqService();
+  final stt.SpeechToText _speech = stt.SpeechToText();
 
   // ✅ الإضافات الجديدة الخاصة بالاتصال بالسيرفر (الباك إند)
   final ChatBotRemoteDataSource _api = ChatBotRemoteDataSource();
@@ -17,8 +19,10 @@ class ChatBotProvider extends ChangeNotifier {
 
   List<ChatMessage> _messages = [];
   bool _isTyping = false;
+  bool _isListening = false;
 
   bool get isTyping => _isTyping;
+  bool get isListening => _isListening;
   List<ChatMessage> get messages => _messages;
   
   // ==========================================
@@ -62,7 +66,41 @@ class ChatBotProvider extends ChangeNotifier {
     }
   }
 
-void sendMessage(String text) async {
+  Future<void> toggleListening(TextEditingController controller) async {
+    if (!_isListening) {
+      bool available = await _speech.initialize(
+        onStatus: (val) {
+          if (val == 'done' || val == 'notListening') {
+            _isListening = false;
+            notifyListeners();
+          }
+        },
+        onError: (val) {
+          _isListening = false;
+          notifyListeners();
+        },
+      );
+      if (available) {
+        _isListening = true;
+        notifyListeners();
+        _speech.listen(
+          onResult: (val) {
+            controller.text = val.recognizedWords;
+          },
+          localeId: 'ar_EG', // Or could be empty for default
+        );
+      } else {
+        _isListening = false;
+        notifyListeners();
+      }
+    } else {
+      _isListening = false;
+      _speech.stop();
+      notifyListeners();
+    }
+  }
+
+  void sendMessage(String text) async {
     if (text.trim().isEmpty || _isTyping) return;
 
     // فصلنا الرسالة في متغير عشان نضيفها للواجهة ونبعتها للسيرفر في نفس الوقت

@@ -80,7 +80,9 @@ class ChatBotBottomPanel extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Expanded(child: _buildTextField(isDark)),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 8),
+                    _buildMicButton(vm),
+                    const SizedBox(width: 8),
                     _buildSendButton(vm),
                   ],
                 ),
@@ -129,6 +131,28 @@ class ChatBotBottomPanel extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildMicButton(ChatBotProvider vm) {
+    return GestureDetector(
+      onTap: vm.isTyping ? null : () => vm.toggleListening(controller),
+      child: Container(
+        height: 48,
+        width: 48,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: vm.isListening
+              ? LinearGradient(colors: [Colors.red.shade400, Colors.red.shade600])
+              : LinearGradient(colors: [ChatBotStyles.g1.withAlpha(50), ChatBotStyles.g3.withAlpha(50)]),
+          border: Border.all(color: vm.isListening ? Colors.red : ChatBotStyles.g1.withAlpha(80), width: 1.5),
+        ),
+        child: Icon(
+          vm.isListening ? Icons.mic : Icons.mic_none,
+          color: vm.isListening ? Colors.white : ChatBotStyles.g1,
+          size: 24,
+        ),
+      ),
     );
   }
 

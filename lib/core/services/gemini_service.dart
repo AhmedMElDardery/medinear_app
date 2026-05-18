@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'dart:io';
+import 'dart:convert';
 
 class GeminiService {
   // ✅ حط المفتاح بتاعك هنا
@@ -70,6 +72,66 @@ General Rules:
       }
     } catch (e) {
       return "خطأ غير متوقع: $e";
+    }
+  }
+
+  Future<String> getResponseWithImage(String prompt, File imageFile) async {
+    try {
+      final bytes = await imageFile.readAsBytes();
+      final base64Image = base64Encode(bytes);
+      
+      // Determine mime type based on file extension (default to jpeg)
+      String mimeType = 'image/jpeg';
+      final path = imageFile.path.toLowerCase();
+      if (path.endsWith('.png')) mimeType = 'image/png';
+      else if (path.endsWith('.webp')) mimeType = 'image/webp';
+
+      final response = await _dio.post(
+        _apiUrl,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': _apiKey,
+          },
+        ),
+        data: {
+          "systemInstruction": {
+            "parts": [
+              {"text": _systemRules}
+            ]
+          },
+          "contents": [
+            {
+              "parts": [
+                {"text": prompt},
+                {
+                  "inlineData": {
+                    "mimeType": mimeType,
+                    "data": base64Image
+                  }
+                }
+              ]
+            }
+          ]
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return response.data['candidates'][0]['content']['parts'][0]['text'];
+      } else {
+        return "كود الخطأ: ${response.statusCode}";
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        debugPrint("❌ Gemini Vision Server Error: \${e.response?.data}");
+        String errorMessage =
+            e.response?.data['error']['message'] ?? 'خطأ غير معروف';
+        return "رفض من السيرفر: \$errorMessage";
+      } else {
+        return "تأكد من اتصال الإنترنت: \${e.message}";
+      }
+    } catch (e) {
+      return "خطأ غير متوقع: \$e";
     }
   }
 }

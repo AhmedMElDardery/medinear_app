@@ -12,6 +12,7 @@ import 'package:medinear_app/features/home/presentation/widgets/medicine_card.da
 import 'package:medinear_app/features/home/presentation/widgets/pharmacy_card.dart';
 import 'package:medinear_app/features/pharmacy/presentation/screens/pharmacy_screen.dart';
 import 'package:medinear_app/features/profile/view_models/profile_provider.dart';
+import 'package:medinear_app/features/visual_search/presentation/screens/visual_search_screen.dart';
 import 'package:medinear_app/features/home/domain/entities/category_entity.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -84,30 +85,13 @@ class _HomeViewState extends ConsumerState<HomeScreen>
         children: [
           // 📷 Camera Button
           _CameraFab(
-            onTap: () async {
-              final picker = ImagePicker();
-              final image = await picker.pickImage(
-                source: ImageSource.camera,
-                imageQuality: 80,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const VisualSearchScreen(),
+                ),
               );
-              if (image != null && context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content:  Row(
-                      children: [
-                        Icon(Icons.check_circle, color: Colors.white),
-                        SizedBox(width: 8),
-                        Text(AppLocalizations.of(context)!.translate("photo_captured")),
-                      ],
-                    ),
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                    margin: const EdgeInsets.all(16),
-                  ),
-                );
-              }
             },
           ),
           const SizedBox(height: 12),
@@ -891,6 +875,7 @@ class _CameraFabState extends ConsumerState<_CameraFab> {
       onTapDown: (_) => setState(() => _pressed = true),
       onTapUp: (_) => setState(() => _pressed = false),
       onTapCancel: () => setState(() => _pressed = false),
+      onTap: widget.onTap, // Fix: Actually trigger the callback
       child: AnimatedScale(
         scale: _pressed ? 0.92 : 1.0,
         duration: const Duration(milliseconds: 100),
