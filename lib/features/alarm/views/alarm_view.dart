@@ -10,6 +10,7 @@ import '../../medication/views/widgets/time_details_card.dart';
 
 // تعريف واجهات التحكم في الحالة (ViewModels) - استيراد الـ ViewModel الخاص بالمنبه من مكانه الجديد
 import '../view_models/alarm_view_model.dart';
+import 'package:medinear_app/core/widgets/custom_app_bar.dart';
 
 class AlarmView extends ConsumerStatefulWidget {
   const AlarmView({super.key});
@@ -28,22 +29,9 @@ class _AlarmViewState extends ConsumerState<AlarmView> {
 
     return Scaffold(
       backgroundColor: bgColor,
-      appBar: AppBar(
-        // جعل الـ AppBar يختفي مع لون الخلفية
+      appBar: CustomAppBar(
         backgroundColor: bgColor,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back,
-              color: AppColors.getPrimaryTextColor(context)),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          'Alarm',
-          style: TextStyle(
-              color: AppColors.getPrimaryTextColor(context),
-              fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
+        title: 'Alarm',
       ),
       body: ListenableBuilder(
         listenable: _viewModel,

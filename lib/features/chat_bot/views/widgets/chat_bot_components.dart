@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_colors.dart';
 import 'chat_bot_styles.dart';
 
 class GlassBtn extends StatelessWidget {
@@ -48,7 +47,7 @@ class AvatarDot extends StatelessWidget {
         gradient: LinearGradient(
           colors: isBot
               ? [ChatBotStyles.g1, ChatBotStyles.g3]
-              : [AppColors.primaryLight, AppColors.primaryLight],
+              : const [Color(0xFF7ECDC4), Color(0xFF4DB8AD)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -118,7 +117,7 @@ class SugChipSolid extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       constraints: const BoxConstraints(maxWidth: 200),
       decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark ? AppColors.surfaceDarkVariant : AppColors.surfaceLightVariant,
+        color: const Color(0xFFE3F7EF),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: ChatBotStyles.g1.withAlpha(80), width: 1),
         boxShadow: const [
@@ -182,9 +181,9 @@ class _PulsingDotState extends ConsumerState<PulsingDot>
           width: 7,
           height: 7,
           decoration: const BoxDecoration(
-            color: AppColors.warning,
+            color: Color(0xFFFF9800),
             shape: BoxShape.circle,
-            boxShadow: [BoxShadow(color: AppColors.warning, blurRadius: 5)],
+            boxShadow: [BoxShadow(color: Color(0xAAFF9800), blurRadius: 5)],
           ),
         ),
       ),
@@ -245,8 +244,8 @@ class TypewriterTextState extends ConsumerState<TypewriterText>
           _cleanText.substring(0, _n.value),
           style: TextStyle(
             color: Theme.of(context).brightness == Brightness.dark
-                ? AppColors.textPrimaryDark
-                : AppColors.textPrimaryLight,
+                ? Colors.white
+                : const Color(0xFF2D3132),
             fontSize: 15.5,
             height: 1.4,
             fontWeight: FontWeight.w500, // ✅ وزن ثابت ومريح للعين لكل الكلام

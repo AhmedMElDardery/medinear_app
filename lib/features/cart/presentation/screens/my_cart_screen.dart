@@ -6,6 +6,7 @@ import 'package:medinear_app/features/cart/presentation/manager/cart_provider.da
 import 'package:medinear_app/features/cart/presentation/widgets/cart_pharmacy_header.dart';
 import 'package:medinear_app/features/cart/presentation/widgets/cart_item_card.dart';
 import 'package:medinear_app/features/checkout/presentation/screens/checkout_screen.dart';
+import 'package:medinear_app/core/widgets/custom_app_bar.dart';
 
 class MyCartScreen extends ConsumerStatefulWidget {
   final int pharmacyId;
@@ -41,14 +42,8 @@ class _MyCartScreenState extends ConsumerState<MyCartScreen> {
 
         return Scaffold(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          appBar: AppBar(
-            title: Text(widget.pharmacyName,
-                style:
-                    TextStyle(color: textColor, fontWeight: FontWeight.bold)),
-            centerTitle: true,
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            iconTheme: IconThemeData(color: textColor),
+          appBar: CustomAppBar(
+            title: widget.pharmacyName,
           ),
           body: Padding(
             padding: const EdgeInsets.all(20),

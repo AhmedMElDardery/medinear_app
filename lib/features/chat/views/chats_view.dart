@@ -8,8 +8,8 @@ import '../data/models/chat_model.dart';
 import '../view_models/chats_view_model.dart';
 // Screens - لو الملف في نفس المجلد بنستخدم المسار المباشر
 import 'archived_chats_view.dart';
-// Widgets - نقلنا الـ chat_list_item لمجلد الـ widgets الخاص بالـ chat
 import 'widgets/chat_list_item.dart';
+import 'package:medinear_app/core/widgets/custom_app_bar.dart';
 
 class ChatsView extends ConsumerStatefulWidget {
   const ChatsView({super.key});
@@ -59,22 +59,9 @@ class _ChatsViewState extends ConsumerState<ChatsView> {
     return Scaffold(
       // ✅ الآن الخلفية ستتغير تلقائياً حسب الثيم (أبيض في الفاتح / أسود صريح في الدارك)
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        // 🚀 خلينا الخلفية شفافة وشيلنا الظل زي البروفايل بظبط
+      appBar: CustomAppBar(
         backgroundColor: Colors.transparent,
-        elevation: 0,
-        // 🚀 زرار الرجوع الاحترافي المتجاوب مع الدارك واللايت
-        leading: BackButton(
-          color: Theme.of(context).textTheme.bodyMedium?.color,
-        ),
-        title: Text('Chats',
-            style: TextStyle(
-              // 🚀 لون النص متجاوب مع الثيم
-              color: Theme.of(context).textTheme.bodyLarge?.color,
-              fontWeight: FontWeight.bold,
-              fontSize: 20,
-            )),
-        centerTitle: true,
+        title: 'Chats',
       ),
       body: ListenableBuilder(
         listenable: _viewModel,

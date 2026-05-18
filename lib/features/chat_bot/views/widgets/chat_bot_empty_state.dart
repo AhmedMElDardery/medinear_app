@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../provider/chat_bot_provider.dart';
-import '../../../../core/theme/app_colors.dart';
 import 'chat_bot_styles.dart';
 
 class ChatBotEmptyState extends StatelessWidget {
@@ -10,63 +9,97 @@ class ChatBotEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return LayoutBuilder(
-      // ✅ بيساعدنا نعرف المساحة المتاحة بدقة
       builder: (context, constraints) {
+        final h = constraints.maxHeight;
+
         return SingleChildScrollView(
-          // ✅ الحل السحري لمنع الـ Overflow وتسهيل حركة الكيبورد
           physics: const BouncingScrollPhysics(),
           child: Container(
-            constraints: BoxConstraints(minHeight: constraints.maxHeight),
-            padding: const EdgeInsets.symmetric(horizontal: 24),
+            constraints: BoxConstraints(minHeight: h),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.start, // يبدأ من فوق بانتظام
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const SizedBox(height: 40),
-
-                // Bot Icon with Gradient
-                const _BotIcon(),
-
-                const SizedBox(height: 24),
-
-                // Welcome Text
-                ShaderMask(
-                  shaderCallback: (r) => const LinearGradient(
-                    colors: [ChatBotStyles.g2, ChatBotStyles.g1],
-                  ).createShader(r),
-                  child: const Text(
-                    "Hello! How can I help you?",
-                    textDirection: TextDirection.ltr,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
+                // 1. اللوجو الرئيسي مع تأثير توهج ثلاثي الأبعاد (Glowing 3D Effect)
+                Container(
+                  padding: const EdgeInsets.all(22),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: ChatBotStyles.g1.withAlpha(35),
+                        blurRadius: 40,
+                        spreadRadius: 10,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [ChatBotStyles.g1, ChatBotStyles.g3],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.medical_services_rounded, // أيقونة طبية احترافية
                       color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
+                      size: 44,
                     ),
                   ),
                 ),
 
-                const SizedBox(height: 8),
+                SizedBox(height: h * 0.04),
 
-                Text(
-                  "Choose a suggestion or type your question",
-                  textDirection: TextDirection.ltr,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: isDark ? Colors.white70 : ChatBotStyles.soft,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
+                // 2. عنوان فخم باستخدام Gradient Text
+                ShaderMask(
+                  shaderCallback: (bounds) => const LinearGradient(
+                    colors: [ChatBotStyles.g3, ChatBotStyles.g1],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ).createShader(bounds),
+                  child: const Text(
+                    "Smart MidiNear",
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                      letterSpacing: -0.5,
+                    ),
                   ),
                 ),
 
-                const SizedBox(height: 32),
+                const SizedBox(height: 12),
 
-                // Suggestions List
-                ...vm.suggestions.map((s) => _SuggestionCard(
-                    text: s, isDark: isDark, onTap: () => vm.sendMessage(s))),
+                // 3. نص فرعي مريح للعين
+                Text(
+                  "Your Smart Healthcare Navigator\nHow can I help you today?",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 15,
+                    height: 1.5,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white70 : ChatBotStyles.soft,
+                  ),
+                ),
 
-                // ✅ شيلنا الـ Spacer وحطينا SizedBox ثابت عشان ميعملش Overflow مع الكيبورد
-                const SizedBox(height: 20),
+                SizedBox(height: h * 0.05),
+
+                // 4. كروت الاقتراحات الفخمة (Premium Cards)
+                Column(
+                  children: vm.suggestions.map((text) {
+                    return _buildPremiumCard(text, isDark, () => vm.sendMessage(text));
+                  }).toList(),
+                ),
+
+                const SizedBox(height: 80),
               ],
             ),
           ),
@@ -74,97 +107,73 @@ class ChatBotEmptyState extends StatelessWidget {
       },
     );
   }
-}
 
-class _SuggestionCard extends StatelessWidget {
-  final String text;
-  final bool isDark;
-  final VoidCallback onTap;
+  // تصميم الكارت الاحترافي
+  Widget _buildPremiumCard(String text, bool isDark, VoidCallback onTap) {
+    // دالة ذكية لاختيار الأيقونة المناسبة بناءً على النص
+    IconData getIcon() {
+      final t = text.toLowerCase();
+      if (t.contains('medicine') || t.contains('order')) return Icons.medication_rounded;
+      if (t.contains('track') || t.contains('shipment')) return Icons.local_shipping_rounded;
+      if (t.contains('consultation') || t.contains('doctor')) return Icons.health_and_safety_rounded;
+      if (t.contains('pharmacy') || t.contains('find')) return Icons.local_pharmacy_rounded;
+      if (t.contains('schedule') || t.contains('reminder')) return Icons.calendar_month_rounded;
+      if (t.contains('account') || t.contains('wallet')) return Icons.account_balance_wallet_rounded;
+      return Icons.auto_awesome_rounded; // أيقونة افتراضية
+    }
 
-  const _SuggestionCard(
-      {required this.text, required this.isDark, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: GestureDetector(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: InkWell(
         onTap: onTap,
+        borderRadius: BorderRadius.circular(22),
+        splashColor: ChatBotStyles.g1.withAlpha(30), // تأثير ضغط ناعم (Ripple Effect)
+        highlightColor: Colors.transparent,
         child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           decoration: BoxDecoration(
-            color: isDark
-                ? AppColors.surfaceDark
-                : AppColors.surfaceLight.withValues(alpha: 0.9),
-            borderRadius: BorderRadius.circular(16),
+            color: isDark ? const Color(0xFF252525) : Colors.white,
+            borderRadius: BorderRadius.circular(22),
             border: Border.all(
-              color: isDark
-                  ? Colors.white24
-                  : ChatBotStyles.g1.withValues(alpha: 0.1),
-              width: 1.2,
+              color: isDark ? Colors.white10 : ChatBotStyles.g1.withAlpha(25),
+              width: 1.5,
             ),
-            boxShadow: const [
+            boxShadow: [
               BoxShadow(
-                color: Color(0x08000000),
-                blurRadius: 10,
-                offset: Offset(0, 4),
+                color: ChatBotStyles.dark.withAlpha(isDark ? 50 : 6),
+                blurRadius: 15,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
           child: Row(
             children: [
-              const Icon(Icons.chat_bubble_outline_rounded,
-                  size: 18, color: ChatBotStyles.g1),
-              const SizedBox(width: 12),
+              // مربع الأيقونة الملون
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: ChatBotStyles.g1.withAlpha(isDark ? 30 : 20),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(getIcon(), color: ChatBotStyles.g2, size: 24),
+              ),
+              const SizedBox(width: 16),
+              // نص الاقتراح
               Expanded(
                 child: Text(
                   text,
-                  textDirection: TextDirection.ltr,
                   style: TextStyle(
-                    color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.w800,
+                    color: isDark ? Colors.white : ChatBotStyles.dark,
                   ),
                 ),
               ),
-              const Icon(Icons.arrow_forward_ios_rounded,
-                  size: 13, color: ChatBotStyles.g1),
+              // سهم أنيق في النهاية
+              Icon(Icons.arrow_forward_ios_rounded, size: 16, color: ChatBotStyles.soft.withAlpha(150)),
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _BotIcon extends StatelessWidget {
-  const _BotIcon();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 90,
-      height: 90,
-      decoration: const BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: LinearGradient(
-          colors: [ChatBotStyles.g1, ChatBotStyles.g3],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x404DD9AC),
-            blurRadius: 25,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: const Icon(
-        Icons.smart_toy_rounded,
-        color: Colors.white,
-        size: 45,
       ),
     );
   }

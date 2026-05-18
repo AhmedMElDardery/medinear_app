@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../view_models/chat_details_view_model.dart';
 import 'widgets/message_bubble.dart';
 import 'widgets/chat_input_field.dart';
-// ✅ إضافة ملف الألوان للوصول لدالة لون النص التفاعلي
+import 'package:medinear_app/core/widgets/custom_app_bar.dart';
 
 class ChatDetailsView extends ConsumerStatefulWidget {
   const ChatDetailsView({super.key});
@@ -39,7 +39,7 @@ class _ChatDetailsViewState extends ConsumerState<ChatDetailsView> {
         // 🚀 لون الهيدر: أسود شيك في الدارك، وأبيض ناصع في اللايت عشان يبرز خط الليزر
         backgroundColor: isDarkMode ? Theme.of(context).scaffoldBackgroundColor : Colors.white,
         elevation: 0, // بنلغي الظل العادي عشان هنعمل ظل "ليزر"
-        leading: BackButton(
+        leading: CustomBackButton(
           color: Theme.of(context).textTheme.bodyMedium?.color,
         ),
         title: Row(

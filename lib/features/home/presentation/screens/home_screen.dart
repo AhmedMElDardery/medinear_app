@@ -209,7 +209,12 @@ class _HomeViewState extends ConsumerState<HomeScreen>
                 title: AppLocalizations.of(context)!.translate("near_pharmacies"),
                 icon: Icons.local_pharmacy_rounded,
                 count: provider.pharmacies.length,
-                onSeeAll: () => context.push(AppRoutes.map),
+                onSeeAll: () {
+                  final mapProv = ref.read(mapProvider);
+                  if (mapProv.isMedicineSearch) mapProv.toggleSearchType(false);
+                  mapProv.search(""); 
+                  ref.read(navigationProvider).changeIndex(3);
+                },
               ),
 
               const SizedBox(height: 12),
@@ -229,7 +234,7 @@ class _HomeViewState extends ConsumerState<HomeScreen>
                     : ListView.separated(
                         scrollDirection: Axis.horizontal,
                         physics: const BouncingScrollPhysics(),
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        padding: const EdgeInsetsDirectional.only(start: 16, end: 100),
                         itemCount: provider.filteredPharmacies.length,
                         separatorBuilder: (_, __) => const SizedBox(width: 14),
                         itemBuilder: (context, index) {
@@ -261,7 +266,12 @@ class _HomeViewState extends ConsumerState<HomeScreen>
                 title: AppLocalizations.of(context)!.translate("near_medicines"),
                 icon: Icons.medication_rounded,
                 count: provider.medicines.length,
-                onSeeAll: () => context.push(AppRoutes.map),
+                onSeeAll: () {
+                  final mapProv = ref.read(mapProvider);
+                  if (!mapProv.isMedicineSearch) mapProv.toggleSearchType(true);
+                  mapProv.search("");
+                  ref.read(navigationProvider).changeIndex(3);
+                },
               ),
 
               const SizedBox(height: 12),
@@ -282,7 +292,7 @@ class _HomeViewState extends ConsumerState<HomeScreen>
                     : ListView.separated(
                         scrollDirection: Axis.horizontal,
                         physics: const BouncingScrollPhysics(),
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        padding: const EdgeInsetsDirectional.only(start: 16, end: 100),
                         itemCount: provider.filteredMedicines.length,
                         separatorBuilder: (_, __) => const SizedBox(width: 12),
                         itemBuilder: (context, index) => MedicineCard(

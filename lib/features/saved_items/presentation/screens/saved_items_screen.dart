@@ -5,6 +5,9 @@ import 'package:medinear_app/core/localization/translate_helper.dart';
 import '../manager/saved_items_provider.dart';
 import '../widgets/saved_item_cards.dart';
 import 'package:medinear_app/features/pharmacy/presentation/screens/pharmacy_screen.dart';
+import 'package:medinear_app/features/pharmacy/presentation/screens/medicine_details_screen.dart';
+import 'package:medinear_app/features/home/domain/entities/medicine_entity.dart';
+import 'package:medinear_app/core/widgets/custom_app_bar.dart';
 
 class SavedItemsScreen extends ConsumerStatefulWidget {
   const SavedItemsScreen({super.key});
@@ -41,19 +44,9 @@ class _SavedItemsScreenState extends ConsumerState<SavedItemsScreen> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        title: Text(
-          context.tr("saved_items_title"),
-          style: TextStyle(
-            color: theme.textTheme.bodyMedium?.color,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        centerTitle: true,
+      appBar: CustomAppBar(
+        showBackButton: false,
+        title: context.tr("saved_items_title"),
       ),
       body: Consumer(
         builder: (context, ref, child) {
@@ -274,22 +267,41 @@ class _SavedItemsScreenState extends ConsumerState<SavedItemsScreen> {
               });
             }
           },
-          child: SavedMedicationCard(
-            medication: medication,
-            theme: theme,
-            onRemove: () async {
-              final error = await provider.removeMedication(medication);
-              if (!mounted) return;
-              if (error != null) {
-                _showErrorSnackBar(error, theme);
-              } else {
-                _showUndoSnackBar('${medication.name} ${context.tr("removed_from_saved")}', theme, () async {
-                  final undoError = await provider.undoRemoveMedication(medication);
-                  if (!mounted) return;
-                  if (undoError != null) _showErrorSnackBar(undoError, theme);
-                });
-              }
+          child: GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => MedicineDetailsScreen(
+                    medicine: MedicineEntity(
+                      id: medication.id,
+                      name: medication.name,
+                      imageUrl: medication.image,
+                      price: double.tryParse(medication.price.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0,
+                      pharmacyId: medication.pharmacyId,
+                      pharmacyName: medication.pharmacyName,
+                    ),
+                  ),
+                ),
+              );
             },
+            child: SavedMedicationCard(
+              medication: medication,
+              theme: theme,
+              onRemove: () async {
+                final error = await provider.removeMedication(medication);
+                if (!mounted) return;
+                if (error != null) {
+                  _showErrorSnackBar(error, theme);
+                } else {
+                  _showUndoSnackBar('${medication.name} ${context.tr("removed_from_saved")}', theme, () async {
+                    final undoError = await provider.undoRemoveMedication(medication);
+                    if (!mounted) return;
+                    if (undoError != null) _showErrorSnackBar(undoError, theme);
+                  });
+                }
+              },
+            ),
           ),
         );
       },

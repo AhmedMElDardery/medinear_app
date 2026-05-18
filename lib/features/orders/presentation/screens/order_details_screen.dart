@@ -3,6 +3,7 @@ import '../../data/models/order_model.dart';
 import '../widgets/order_header_card.dart';
 import '../widgets/order_item_card.dart';
 import '../widgets/payment_summary_card.dart';
+import 'package:medinear_app/core/widgets/custom_app_bar.dart';
 
 class OrderDetailsScreen extends StatelessWidget {
   final OrderModel order;
@@ -17,13 +18,8 @@ class OrderDetailsScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: Text("Orders Details",
-            style: TextStyle(color: textColor, fontWeight: FontWeight.bold)),
-        centerTitle: true,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: IconThemeData(color: textColor),
+      appBar: CustomAppBar(
+        title: "Orders Details",
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),

@@ -5,6 +5,7 @@ import 'package:medinear_app/features/medication/views/widgets/medication_card.d
 import 'package:medinear_app/features/wallet/views/widgets/custom_button.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:medinear_app/core/di/global_providers.dart';
+import 'package:medinear_app/core/widgets/custom_app_bar.dart';
 
 // 🚨 السطر اللي كان ناقص ومسبب كل المشاكل:
 class WalletView extends ConsumerWidget {
@@ -19,10 +20,8 @@ class WalletView extends ConsumerWidget {
       // ✅ جعل الخلفية ديناميكية تتبع الثيم (Light/Dark)
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
 
-      appBar: AppBar(
-        elevation: 0,
-        title:  Text(context.tr("wallet_title")),
-        centerTitle: true,
+      appBar: CustomAppBar(
+        title: context.tr("wallet_title"),
       ),
       body: Container(
         padding: const EdgeInsets.all(16.0),

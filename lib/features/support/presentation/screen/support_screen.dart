@@ -4,6 +4,7 @@ import 'package:medinear_app/features/support/presentation/widgets/support_card.
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:medinear_app/core/di/global_providers.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:medinear_app/core/widgets/custom_app_bar.dart';
 
 class SupportScreen extends ConsumerStatefulWidget {
   const SupportScreen({super.key});
@@ -275,39 +276,10 @@ class _SupportScreenState extends ConsumerState<SupportScreen> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: Text(
-          context.tr("support_title"),
-          style: TextStyle(
-            fontWeight: FontWeight.w800,
-            fontSize: 20,
-            color: theme.textTheme.titleLarge?.color,
-            letterSpacing: -0.5,
-          ),
-        ),
+      appBar: CustomAppBar(
+        title: context.tr("support_title"),
         centerTitle: false,
-        elevation: 0,
         backgroundColor: Colors.transparent,
-        foregroundColor: theme.appBarTheme.foregroundColor,
-        leadingWidth: 64,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 12.0),
-          child: IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                  color: theme.cardColor,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                          color: theme.dividerColor.withValues(alpha: 0.2)),
-              ),
-              child: Icon(Icons.arrow_back_rounded,
-                  color: theme.iconTheme.color,
-                  size: 20),
-            ),
-          ),
-        ),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 12.0),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/entities/notification_entity.dart';
 import '../../domain/usecases/get_notifications_usecase.dart';
 
@@ -16,6 +17,7 @@ class NotificationsProvider extends ChangeNotifier {
 
   bool get isLoading => _isLoading;
   String get currentFilter => _currentFilter;
+  bool get hasUnread => _notifications.any((n) => !n.isRead);
 
   List<NotificationEntity> get displayedNotifications {
     List<NotificationEntity> filtered;
@@ -38,7 +40,18 @@ class NotificationsProvider extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     try {
-      _notifications = await getNotificationsUseCase.execute();
+      final fetched = await getNotificationsUseCase.execute();
+      final prefs = await SharedPreferences.getInstance();
+      
+      final readIds = prefs.getStringList('read_notifications') ?? [];
+      final deletedIds = prefs.getStringList('deleted_notifications') ?? [];
+
+      _notifications = fetched.where((n) => !deletedIds.contains(n.id)).toList();
+      for (var n in _notifications) {
+        if (readIds.contains(n.id)) {
+          n.isRead = true;
+        }
+      }
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -61,18 +74,32 @@ class NotificationsProvider extends ChangeNotifier {
     await fetchData();
   }
 
-  void markAsRead(String id) {
+  void markAsRead(String id) async {
     final index = _notifications.indexWhere((n) => n.id == id);
     if (index != -1 && !_notifications[index].isRead) {
       _notifications[index].isRead = true;
       notifyListeners();
+
+      final prefs = await SharedPreferences.getInstance();
+      final readIds = prefs.getStringList('read_notifications') ?? [];
+      if (!readIds.contains(id)) {
+        readIds.add(id);
+        await prefs.setStringList('read_notifications', readIds);
+      }
     }
   }
 
-  void markAllAsRead() {
+  void markAllAsRead() async {
+    final prefs = await SharedPreferences.getInstance();
+    final readIds = prefs.getStringList('read_notifications') ?? [];
+
     for (var n in _notifications) {
       n.isRead = true;
+      if (!readIds.contains(n.id)) {
+        readIds.add(n.id);
+      }
     }
+    await prefs.setStringList('read_notifications', readIds);
     notifyListeners();
   }
 
@@ -82,14 +109,30 @@ class NotificationsProvider extends ChangeNotifier {
       final removedItem = _notifications[index];
       _notifications.removeAt(index);
       notifyListeners();
+
+      SharedPreferences.getInstance().then((prefs) {
+        final deletedIds = prefs.getStringList('deleted_notifications') ?? [];
+        if (!deletedIds.contains(id)) {
+          deletedIds.add(id);
+          prefs.setStringList('deleted_notifications', deletedIds);
+        }
+      });
+
       return removedItem;
     }
     return null;
   }
 
-  void restoreItem(NotificationEntity item) {
+  void restoreItem(NotificationEntity item) async {
     _notifications.add(item);
     _notifications.sort((a, b) => int.parse(a.id).compareTo(int.parse(b.id)));
     notifyListeners();
+
+    final prefs = await SharedPreferences.getInstance();
+    final deletedIds = prefs.getStringList('deleted_notifications') ?? [];
+    if (deletedIds.contains(item.id)) {
+      deletedIds.remove(item.id);
+      await prefs.setStringList('deleted_notifications', deletedIds);
+    }
   }
 }

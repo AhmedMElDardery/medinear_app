@@ -42,6 +42,10 @@ import 'package:medinear_app/features/support/presentation/provider/support_prov
 import 'package:medinear_app/features/wallet/view_models/wallet_view_model.dart';
 import 'package:medinear_app/features/splash/splash_provider.dart';
 import 'package:medinear_app/features/cart/presentation/manager/cart_provider.dart';
+import 'package:medinear_app/features/notifications/presentation/manager/notifications_provider.dart';
+import 'package:medinear_app/features/notifications/domain/usecases/get_notifications_usecase.dart';
+import 'package:medinear_app/features/notifications/data/repositories/notifications_repository_impl.dart';
+import 'package:medinear_app/features/notifications/data/datasources/notifications_remote_data_source.dart';
 
 // ==========================================
 // 1. Core Services & Clients
@@ -155,3 +159,13 @@ final alarmViewModelProvider =
         (ref) => AlarmViewModel());
 final supportProvider = ChangeNotifierProvider.autoDispose<SupportProvider>(
     (ref) => SupportProvider());
+final notificationsProvider =
+    ChangeNotifierProvider.autoDispose<NotificationsProvider>((ref) {
+  return NotificationsProvider(
+    getNotificationsUseCase: GetNotificationsUseCase(
+      NotificationsRepositoryImpl(
+        remoteDataSource: NotificationsRemoteDataSource(),
+      ),
+    ),
+  );
+});

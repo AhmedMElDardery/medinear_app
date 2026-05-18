@@ -9,6 +9,7 @@ import 'package:medinear_app/features/pharmacy/presentation/screens/pharmacy_scr
 import 'package:medinear_app/core/localization/app_localizations.dart';
 import 'package:medinear_app/core/widgets/app_shimmer.dart';
 import 'package:medinear_app/core/widgets/custom_empty_state.dart';
+import 'package:medinear_app/features/cart/data/datasources/cart_remote_data_source.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
   final String medicine;
@@ -21,6 +22,8 @@ class MapScreen extends ConsumerStatefulWidget {
 class _MapScreenState extends ConsumerState<MapScreen> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
+  final CartRemoteDataSource _cartDataSource = CartRemoteDataSource();
+  final Set<String> _addingToCart = {}; // 🆕 لتتبع الأزرار الجاري تحميلها
 
   @override
   void initState() {
@@ -83,8 +86,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     mapType: MapType.normal,
                     initialCameraPosition: CameraPosition(
                         target: provider.userLocation!, zoom: 13.5),
-                    markers: provider.getMarkers(Theme.of(context).colorScheme.primary),
-                    circles: provider.getCircles(Theme.of(context).colorScheme.primary),
+                    markers: provider.getMarkers(),
+                    circles: provider.getCircles(),
                     onMapCreated: (controller) {
                       if (!provider.mapController.isCompleted) {
                         provider.mapController.complete(controller);
@@ -449,7 +452,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 child: provider.isLoading
                     ? ListView.builder(
                         controller: scrollController,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        padding: const EdgeInsets.only(left: 16, right: 16, bottom: 100),
                         itemCount: 4,
                         itemBuilder: (context, index) => const Padding(
                           padding: EdgeInsets.only(bottom: 12),
@@ -458,10 +461,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       )
                     : ListView.builder(
                         controller: scrollController,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        padding: const EdgeInsets.only(left: 16, right: 16, bottom: 100),
                         itemCount: provider.pharmacies.length,
                         itemBuilder: (context, index) {
                           final pharmacy = provider.pharmacies[index];
+                          final cartKey = '${provider.lastMedicineId}_${pharmacy.id}';
+                          final isAdding = _addingToCart.contains(cartKey);
                           return PharmacyCard(
                             item: pharmacy,
                             isMapMode: !(provider.isMedicineSearch &&
@@ -480,16 +485,15 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                               ),
                             ),
                             onNotify: () => provider.notifyApi(pharmacy.id),
-                            onAddToCart: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                      "${'addedToCart'.tr(context)} ${provider.lastQuery.isEmpty ? "" : provider.lastQuery} ${pharmacy.name}"),
-                                  backgroundColor: Theme.of(context).colorScheme.primary,
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
-                            },
+                            onAddToCart: isAdding
+                                ? null // عشان الزرار مايتضغطش تاني
+                                : () => _handleAddToCart(
+                                      context: context,
+                                      provider: provider,
+                                      pharmacyId: pharmacy.id,
+                                      pharmacyName: pharmacy.name,
+                                      cartKey: cartKey,
+                                    ),
                           );
                         },
                       ),
@@ -499,6 +503,99 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         );
       },
     );
+  }
+
+  // 🆕 دالة الإضافة الحقيقية للـ Cart
+  Future<void> _handleAddToCart({
+    required BuildContext context,
+    required MapProvider provider,
+    required String pharmacyId,
+    required String pharmacyName,
+    required String cartKey,
+  }) async {
+    final medicineId = provider.lastMedicineId;
+
+    // لو مفيش medicine_id (يعني البحث بالاسم مش بالـ ID)، نوضح للمستخدم
+    if (medicineId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+              "يرجى اختيار الدواء من قائمة الاقتراحات لإضافته للسلة"),
+          backgroundColor: Colors.orange[700],
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+      return;
+    }
+
+    // نضيف المفتاح عشان الزرار يبقى disabled أثناء التحميل
+    setState(() => _addingToCart.add(cartKey));
+
+    try {
+      final success = await _cartDataSource.toggleCartItem(
+        medicineId: medicineId,
+        pharmacyId: int.parse(pharmacyId),
+        quantity: 1,
+      );
+
+      if (!mounted) return;
+
+      if (success) {
+        // 🆕 تحديث الـ CartProvider عشان الـ badge يتحدث
+        ref.read(cartProvider).loadCartPharmacies();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                   child: Text(
+                    "${'addedToCart'.tr(context)} $pharmacyName",
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            behavior: SnackBarBehavior.floating,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(Icons.error_outline, color: Colors.white, size: 20),
+                SizedBox(width: 10),
+                Text("حدث خطأ، حاول مرة أخرى"),
+              ],
+            ),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text("فشل الاتصال بالسيرفر"),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _addingToCart.remove(cartKey));
+    }
   }
 }
 

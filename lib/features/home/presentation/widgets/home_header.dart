@@ -9,8 +9,11 @@ class HomeHeader extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final provider = ref.watch(themeProvider);
-    final isDark = provider.themeMode == ThemeMode.dark;
+    final themeProv = ref.watch(themeProvider);
+    final isDark = themeProv.themeMode == ThemeMode.dark;
+    
+    // Watch notifications provider to check for unread messages
+    final notifProv = ref.watch(notificationsProvider);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -58,7 +61,7 @@ class HomeHeader extends ConsumerWidget {
           // 🌙 Theme Toggle
           _IconBtn(
             icon: isDark ? Icons.wb_sunny_outlined : Icons.dark_mode_outlined,
-            onTap: provider.toggleTheme,
+            onTap: themeProv.toggleTheme,
             isDark: isDark,
           ),
 
@@ -82,18 +85,19 @@ class HomeHeader extends ConsumerWidget {
                 onTap: () => context.push(AppRoutes.notification),
                 isDark: isDark,
               ),
-              Positioned(
-                top: 4,
-                right: 4,
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: Colors.red,
-                    shape: BoxShape.circle,
+              if (notifProv.hasUnread)
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
         ],

@@ -4,16 +4,40 @@ import '../data/models/chat_bot_model.dart';
 import 'package:medinear_app/core/services/gemini_service.dart';
 import 'package:medinear_app/core/services/groq_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../data/datasources/chat_bot_remote_data_source.dart';
 
 class ChatBotProvider extends ChangeNotifier {
+  // الخدمات القديمة بتاعت الذكاء الاصطناعي زي ما هي
   final GeminiService _geminiService = GeminiService();
   final GroqService _groqService = GroqService();
+
+  // ✅ الإضافات الجديدة الخاصة بالاتصال بالسيرفر (الباك إند)
+  final ChatBotRemoteDataSource _api = ChatBotRemoteDataSource();
+  String? _userToken;
 
   List<ChatMessage> _messages = [];
   bool _isTyping = false;
 
   bool get isTyping => _isTyping;
   List<ChatMessage> get messages => _messages;
+  
+  // ==========================================
+  // ✅ الدالة اللي كانت ناقصة عشان تجيب الشات أول ما تفتح
+  // ==========================================
+  Future<void> initChat(String token) async {
+    _userToken = token;
+    _isTyping = true;
+    notifyListeners();
+
+    _messages = await _api.getChatHistory(_userToken!);
+    
+    _isTyping = false;
+    notifyListeners();
+  }
+
+  // ----------------------------------------------------
+  // (هنا هتبدأ تحط الدوال الجديدة اللي اتفقنا عليها زي initChat وتعدل sendMessage)
+  // ----------------------------------------------------
 
   final List<String> suggestions = [
     'Medicine Order Guide',
@@ -38,17 +62,23 @@ class ChatBotProvider extends ChangeNotifier {
     }
   }
 
-  void sendMessage(String text) async {
+void sendMessage(String text) async {
     if (text.trim().isEmpty || _isTyping) return;
 
-    _messages.add(
-      ChatMessage(
-        id: DateTime.now().toString(),
-        text: text,
-        isBot: false,
-        timestamp: DateTime.now(),
-      ),
+    // فصلنا الرسالة في متغير عشان نضيفها للواجهة ونبعتها للسيرفر في نفس الوقت
+    final userMsg = ChatMessage(
+      id: DateTime.now().toString(),
+      text: text,
+      isBot: false,
+      timestamp: DateTime.now(),
     );
+
+    _messages.add(userMsg);
+
+    // ✅ الإضافة الأولى: رفع رسالة المستخدم للسيرفر في الخلفية
+    if (_userToken != null) {
+      _api.saveMessage(userMsg, _userToken!);
+    }
 
     _isTyping = true;
     notifyListeners();
@@ -77,14 +107,20 @@ class ChatBotProvider extends ChangeNotifier {
       await Future.delayed(const Duration(milliseconds: 1000));
     }
 
-    _messages.add(
-      ChatMessage(
-        id: DateTime.now().toString(),
-        text: response,
-        isBot: true,
-        timestamp: DateTime.now(),
-      ),
+    // فصلنا رسالة البوت في متغير بردو
+    final botMsg = ChatMessage(
+      id: DateTime.now().toString(),
+      text: response,
+      isBot: true,
+      timestamp: DateTime.now(),
     );
+
+    _messages.add(botMsg);
+
+    // ✅ الإضافة الثانية: رفع رسالة البوت للسيرفر في الخلفية
+    if (_userToken != null) {
+      _api.saveMessage(botMsg, _userToken!);
+    }
 
     int extraWait = response.length * 12;
     Future.delayed(Duration(milliseconds: extraWait), () {
@@ -121,10 +157,15 @@ class ChatBotProvider extends ChangeNotifier {
     return "Sorry, I didn't quite understand your inquiry.\nI am the MidiNear guide, does your question concern:\n- Medicine Order Guide\n- Track Shipment\n- Instant Consultation\n- Find a Pharmacy\n- Medication Schedule\n- Account & Wallet? 💙";
   }
 
-  void clearChat() {
+void clearChat() {
     _messages = [];
     _isTyping = false;
     notifyListeners();
+
+    // ✅ مسح الشات من قاعدة بيانات السيرفر (لو المستخدم مسجل دخول)
+    if (_userToken != null) {
+      _api.clearChat(_userToken!);
+    }
   }
 }
 

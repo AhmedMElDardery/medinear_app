@@ -678,7 +678,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               ),
                             ]),
                       ),
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 120), // 🚀 زيادة المسافة السفلية عشان البار السفلي ميغطيش على زرار تسجيل الخروج
                     ],
                   ),
                 ),

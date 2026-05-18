@@ -5,6 +5,7 @@ import '../../data/models/order_model.dart';
 import '../manager/order_provider.dart'; // 🚀 استدعاء المدير
 import '../widgets/order_card.dart';
 import 'order_details_screen.dart';
+import 'package:medinear_app/core/widgets/custom_app_bar.dart';
 
 class MyOrdersScreen extends ConsumerStatefulWidget {
   const MyOrdersScreen({super.key});
@@ -49,13 +50,8 @@ class _MyOrdersScreenState extends ConsumerState<MyOrdersScreen> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: Text("My Orders",
-            style: TextStyle(color: textColor, fontWeight: FontWeight.bold)),
-        centerTitle: true,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: IconThemeData(color: textColor),
+      appBar: CustomAppBar(
+        title: "My Orders",
       ),
       // 🚀 استخدام Consumer لمراقبة حالة الطلبات
       body: Consumer(

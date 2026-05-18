@@ -256,7 +256,7 @@ class _MedicineDetailsScreenState extends ConsumerState<MedicineDetailsScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildIconButton(Icons.arrow_back_ios_new_rounded, () => context.pop(), isDark),
+                    _buildIconButton(Icons.arrow_back, () => context.pop(), isDark),
                     _buildIconButton(
                       _isFavorite ? Icons.bookmark_rounded : Icons.bookmark_border_rounded, 
                       () async {

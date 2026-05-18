@@ -38,7 +38,7 @@ class ChatBotHeader extends StatelessWidget {
           Row(
             children: [
               GlassBtn(
-                icon: Icons.arrow_back_rounded,
+                icon: Icons.arrow_back,
                 onTap: () => Navigator.pop(context),
                 size: 38,
                 iconSize: 20,

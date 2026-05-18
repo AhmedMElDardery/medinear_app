@@ -1,7 +1,5 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../provider/chat_bot_provider.dart';
-import '../../../../core/theme/app_colors.dart';
 import 'chat_bot_styles.dart';
 import 'chat_bot_components.dart';
 
@@ -17,7 +15,7 @@ class ChatBotBottomPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bottom = MediaQuery.of(context).padding.bottom;
+    // ✅ 1. تم استبدال الحسبة القديمة بـ 0 لأننا بنتحكم في الارتفاع من الـ Wrapper الخارجي لسرعة خرافية
     final isEmpty = vm.messages.isEmpty;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -36,60 +34,58 @@ class ChatBotBottomPanel extends StatelessWidget {
           topLeft: Radius.circular(24),
           topRight: Radius.circular(24),
         ),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-          child: Container(
-            decoration: BoxDecoration(
-              color: isDark
-                  ? AppColors.surfaceDark.withAlpha(200)
-                  : AppColors.surfaceLight.withAlpha(180),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(24),
-                topRight: Radius.circular(24),
-              ),
-              border: Border(
-                top: BorderSide(
-                    color: ChatBotStyles.g1.withAlpha(40), width: 0.8),
-              ),
+        // 🚀 تم إزالة BackdropFilter لرفع كفاءة المعالج أثناء حركة الكيبورد
+        child: Container(
+          decoration: BoxDecoration(
+            color: isDark
+                ? const Color(0xFF1E1E1E).withAlpha(250) // تعويض الـ Blur بزيادة العتامة
+                : ChatBotStyles.panelBg.withAlpha(250),
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(24),
+              topRight: Radius.circular(24),
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (!isEmpty && vm.suggestions.isNotEmpty)
-                  Container(
-                    height: 50,
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
-                          color: ChatBotStyles.g1.withAlpha(20),
-                          width: 0.5,
-                        ),
-                      ),
-                    ),
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.fromLTRB(12, 7, 12, 7),
-                      itemCount: vm.suggestions.length,
-                      itemBuilder: (_, i) => GestureDetector(
-                        // 🔒 قفل الضغط على الاقتراحات أثناء الرد
-                        onTap: vm.isTyping ? null : () => vm.sendMessage(vm.suggestions[i]),
-                        child: SugChipSolid(text: vm.suggestions[i]),
+            border: Border(
+              top: BorderSide(
+                  color: ChatBotStyles.g1.withAlpha(40), width: 0.8),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (!isEmpty && vm.suggestions.isNotEmpty)
+                Container(
+                  height: 50,
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        color: ChatBotStyles.g1.withAlpha(20),
+                        width: 0.5,
                       ),
                     ),
                   ),
-                Padding(
-                  padding: EdgeInsets.fromLTRB(12, 10, 12, bottom + 12),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Expanded(child: _buildTextField(isDark)),
-                      const SizedBox(width: 10),
-                      _buildSendButton(vm),
-                    ],
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.fromLTRB(12, 7, 12, 7),
+                    itemCount: vm.suggestions.length,
+                    itemBuilder: (_, i) => GestureDetector(
+                      onTap: vm.isTyping ? null : () => vm.sendMessage(vm.suggestions[i]),
+                      child: SugChipSolid(text: vm.suggestions[i]),
+                    ),
                   ),
                 ),
-              ],
-            ),
+              Padding(
+                // ✅ 2. تم تثبيت البادينج لضمان عدم وجود "مط" أو "تأخير" أثناء الطلوع والنزول
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(child: _buildTextField(isDark)),
+                    const SizedBox(width: 10),
+                    _buildSendButton(vm),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -97,59 +93,66 @@ class ChatBotBottomPanel extends StatelessWidget {
   }
 
   Widget _buildTextField(bool isDark) {
-    return Container(
-      height: 48,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDarkVariant : AppColors.surfaceLight.withAlpha(200),
-        borderRadius: const BorderRadius.all(Radius.circular(24)),
-        border: Border.all(color: ChatBotStyles.g1.withAlpha(50), width: 0.8),
-      ),
-      alignment: Alignment.centerLeft,
-      child: TextField(
-        controller: controller,
-        // 🔒 قفل الحقل أثناء التحميل
-        enabled: !vm.isTyping,
-        textDirection: TextDirection.ltr,
-        textAlignVertical: TextAlignVertical.center,
-        style: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-          color: vm.isTyping ? Colors.grey : (isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight),
-        ),
-        decoration: InputDecoration(
-          hintText: vm.isTyping ? "Please wait..." : "Type your message...",
-          hintTextDirection: TextDirection.ltr,
-          border: InputBorder.none,
-          isCollapsed: true,
-          hintStyle: TextStyle(color: ChatBotStyles.soft, fontSize: 13),
-        ),
-      ),
+    return ValueListenableBuilder<TextEditingValue>(
+      valueListenable: controller,
+      builder: (context, value, child) {
+        final isArabic = RegExp(r'[\u0600-\u06FF]').hasMatch(value.text);
+        final textDir = isArabic ? TextDirection.rtl : TextDirection.ltr;
+        final containerAlign = isArabic ? Alignment.centerRight : Alignment.centerLeft;
+
+        return Container(
+          height: 48,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF2C2C2E) : Colors.white.withAlpha(200),
+            borderRadius: const BorderRadius.all(Radius.circular(24)),
+            border: Border.all(color: ChatBotStyles.g1.withAlpha(50), width: 0.8),
+          ),
+          alignment: containerAlign,
+          child: TextField(
+            controller: controller,
+            enabled: !vm.isTyping,
+            textDirection: textDir,
+            textAlignVertical: TextAlignVertical.center,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: vm.isTyping ? Colors.grey : (isDark ? Colors.white : ChatBotStyles.dark),
+            ),
+            decoration: InputDecoration(
+              hintText: vm.isTyping ? "Please wait..." : "Type your message...",
+              hintTextDirection: textDir,
+              border: InputBorder.none,
+              isCollapsed: true,
+              hintStyle: TextStyle(color: ChatBotStyles.soft, fontSize: 13),
+            ),
+          ),
+        );
+      },
     );
   }
 
   Widget _buildSendButton(ChatBotProvider vm) {
     return GestureDetector(
-      // 🔒 منع الإرسال المتكرر
       onTap: vm.isTyping ? null : () {
         if (controller.text.trim().isNotEmpty) {
           vm.sendMessage(controller.text.trim());
           controller.clear();
         }
       },
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
         height: 48,
         padding: const EdgeInsets.symmetric(horizontal: 18),
         decoration: BoxDecoration(
           borderRadius: const BorderRadius.all(Radius.circular(24)),
-          // 🎨 تغيير اللون لرمادي في حالة التحميل
-          gradient: vm.isTyping 
-            ? LinearGradient(colors: [Colors.grey.shade400, Colors.grey.shade600])
-            : const LinearGradient(
-                colors: [ChatBotStyles.g1, ChatBotStyles.g3],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+          gradient: LinearGradient(
+            colors: vm.isTyping 
+              ? [ChatBotStyles.g1.withAlpha(150), ChatBotStyles.g3.withAlpha(150)]
+              : [ChatBotStyles.g1, ChatBotStyles.g3],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
           boxShadow: [
             if (!vm.isTyping)
               BoxShadow(
@@ -163,17 +166,19 @@ class ChatBotBottomPanel extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              vm.isTyping ? "..." : "Send",
-              style: const TextStyle(
-                color: Colors.white,
+              "Send",
+              style: TextStyle(
+                color: vm.isTyping ? Colors.white.withAlpha(150) : Colors.white,
                 fontSize: 14,
                 fontWeight: FontWeight.w800,
               ),
             ),
             const SizedBox(width: 6),
-            vm.isTyping 
-              ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-              : const Icon(Icons.send_rounded, color: Colors.white, size: 18),
+            Icon(
+              Icons.send_rounded, 
+              color: vm.isTyping ? Colors.white.withAlpha(150) : Colors.white, 
+              size: 18
+            ),
           ],
         ),
       ),

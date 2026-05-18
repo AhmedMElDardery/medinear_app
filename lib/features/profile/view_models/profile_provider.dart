@@ -126,16 +126,21 @@ class ProfileProvider extends ChangeNotifier {
     String oldName = _user!.name;
     String oldPhone = _user!.phone;
 
+    Map<String, dynamic> dataToSend = {};
+
     if (key == 'Name') {
       _user!.name = cleanValue;
+      dataToSend['name'] = cleanValue;
     } else if (key == 'Phone') {
       _user!.phone = cleanValue;
+      dataToSend['phone'] = cleanValue;
     }
 
     notifyListeners();
 
     try {
-      await _dataSource.updateProfile(_user!.toJson());
+      // 🚀 بنبعت الحقل اللي اتغير بس عشان الباك إند ميضربش Validation على الحقول الفاضية
+      await _dataSource.updateProfile(dataToSend);
       // لو نجح مش هنعمل حاجة عشان إنت قولت مش عايز رسالة خضرا والنافذة بتقفل طلقة
     } catch (e) {
       // 🚀 لو السيرفر رفض (زي إن الاسم أقل من حرفين)، نرجع الداتا القديمة

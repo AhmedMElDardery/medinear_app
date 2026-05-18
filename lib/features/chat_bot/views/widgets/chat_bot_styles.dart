@@ -1,27 +1,22 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_colors.dart';
 
 class ChatBotStyles {
-  // Brand colors
-  static const g1 = AppColors.primaryLight;
-  static const g2 = AppColors.primaryLight;
-  static const g3 = AppColors.primaryLight;
+  static const g1 = Color(0xFF4DD9AC);
+  static const g2 = Color(0xFF2BB58A);
+  static const g3 = Color(0xFF1A7A60);
 
-  static const hTop = AppColors.primaryLight;
-  static const hMid = AppColors.primaryLight;
-  static const hBot = AppColors.primaryLight;
+  static const hTop = Color(0xFF3ECFA0);
+  static const hMid = Color(0xFF2BB58A);
+  static const hBot = Color(0xFF1E8C6E);
 
-  // Background
-  static const bgBase = AppColors.backgroundLight;
-  
-  // Texts
-  static const sugText = AppColors.primaryLight;
-  static const dark = AppColors.textPrimaryLight;
-  static const soft = AppColors.textSecondaryLight;
-  
-  // Panels and bubbles
-  static const panelBg = AppColors.surfaceLight;
-  static const userBubble = AppColors.primaryLight;
-  static const botBubble = AppColors.surfaceLightVariant;
-  static const userText = AppColors.textPrimaryLight;
+  static const bgBase = Color(0xFFF5FBF9);
+  static const sugText = Color(0xFF1A6B52);
+
+  static const dark = Color(0xFF0E2922);
+  static const soft = Color(0xFF8AADA5);
+  static const panelBg = Color(0xFFF8FEFB);
+
+  static const userBubble = Color(0xFFC8F0E4);
+  static const botBubble = Color(0xFFF0FCF9);
+  static const userText = Color(0xFF0E2922);
 }

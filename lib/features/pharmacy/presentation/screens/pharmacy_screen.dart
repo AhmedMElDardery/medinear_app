@@ -96,115 +96,232 @@ class _PharmacyScreenState extends ConsumerState<PharmacyScreen>
         body: Consumer(
           builder: (context, ref, _) {
             final provider = ref.watch(pharmacyProvider);
-            return Column(
-              children: [
-                // ── Premium Header ──────────────────────
-                _buildHeader(context),
-
-                // ── Body ────────────────────────────────
-                Expanded(
-                  child: provider.isLoading
-                      ? ListView.builder(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: 5,
-                          itemBuilder: (context, index) => const Padding(
-                            padding: EdgeInsets.only(bottom: 16),
-                            child: AppShimmer(width: double.infinity, height: 120),
+            
+            if (provider.isLoading) {
+              return Column(
+                children: [
+                  Container(
+                    height: 180,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Theme.of(context).colorScheme.primary, Theme.of(context).colorScheme.primaryContainer],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        AppBar(
+                          backgroundColor: Colors.transparent,
+                          elevation: 0,
+                          leading: IconButton(
+                            icon: const Icon(Icons.arrow_back, color: Colors.white, size: 28),
+                            onPressed: () => Navigator.pop(context),
                           ),
-                        )
-                      : Column(
-                          children: [
-                            // Flash Sale Banner
-                            _buildFlashSaleBanner(),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: 5,
+                      itemBuilder: (context, index) => const Padding(
+                        padding: EdgeInsets.only(bottom: 16),
+                        child: AppShimmer(width: double.infinity, height: 120),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            }
 
-                            // Search Bar
-                            _buildSearchBar(provider, isDark),
+            return NestedScrollView(
+              headerSliverBuilder: (context, innerBoxIsScrolled) {
+                return [
+                  SliverAppBar(
+                    expandedHeight: 200,
+                    pinned: true,
+                    elevation: 0,
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    leading: IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.white, size: 28),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    actions: [
+                      Consumer(builder: (context, ref, child) {
+                        final provider = ref.watch(pharmacyProvider);
+                        return GestureDetector(
+                          onTap: () async {
+                            await provider.togglePharmacySave();
+                            if (context.mounted) {
+                              ref.read(savedItemsProvider).fetchSavedItems(silent: true);
+                            }
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Icon(
+                                provider.isPharmacySaved
+                                    ? Icons.bookmark_rounded
+                                    : Icons.bookmark_border_rounded,
+                                color: Colors.white,
+                                size: 28),
+                          ),
+                        );
+                      }),
+                      const SizedBox(width: 8),
+                    ],
+                    flexibleSpace: LayoutBuilder(
+                      builder: (BuildContext context, BoxConstraints constraints) {
+                        final top = constraints.biggest.height;
+                        final expandedHeight = 200.0;
+                        final collapsedHeight = kToolbarHeight + MediaQuery.of(context).padding.top;
+                        final double collapsePercentage = (top - collapsedHeight) / (expandedHeight - collapsedHeight);
+                        final bool isCollapsed = collapsePercentage < 0.4;
 
-                            // Tab Bar
-                            _buildTabBar(isDark),
-
-                            // Tab Content
-                            Expanded(
-                              child: TabBarView(
-                                controller: _tabController,
-                                children: [
-                                  _buildList(
-                                    isDark: isDark,
-                                    isEmpty: provider.filteredMedicines.isEmpty,
-                                    emptyMsg: 'No medicines found',
-                                    emptyIcon: Icons.medication_outlined,
-                                    itemCount:
-                                        provider.filteredMedicines.length,
-                                    itemBuilder: (i) {
-                                      final pharmacyMed = provider.filteredMedicines[i];
-                                      return GestureDetector(
-                                        onTap: () {
-                                          final medEntity = MedicineEntity(
-                                            id: pharmacyMed.id.toString(),
-                                            name: pharmacyMed.name,
-                                            imageUrl: pharmacyMed.image,
-                                            price: pharmacyMed.price,
-                                            pharmacyId: widget.pharmacyId,
-                                            pharmacyName: widget.pharmacyName,
-                                          );
-                                          context.push(AppRoutes.medicineDetails, extra: medEntity);
-                                        },
-                                        child: PharmacyMedicineCard(
-                                          medicine: pharmacyMed,
-                                          onToggleSave: () async {
-                                            await provider.toggleMedicineSaved(
-                                                pharmacyMed.id);
-                                            if (context.mounted) {
-                                              ref.read(savedItemsProvider)
-                                                  .fetchSavedItems(silent: true);
-                                            }
-                                          },
-                                          onToggleNotify: () =>
-                                              provider.toggleMedicineNotify(
-                                                  pharmacyMed.id),
-                                          onAddToCart: () async {
-                                            await provider.toggleMedicineInCart(
-                                                pharmacyMed.id);
-                                            if (context.mounted) {
-                                              ref.read(cartProvider).loadCartPharmacies();
-                                              if (pharmacyMed.inCart) {
-                                                _showAddedToCart(pharmacyMed.name);
-                                              } else {
-                                                ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                                              }
-                                            }
-                                          },
-                                        ),
-                                      );
-                                    },
+                        return FlexibleSpaceBar(
+                          centerTitle: true,
+                          titlePadding: const EdgeInsets.only(bottom: 16, left: 50, right: 50),
+                          title: isCollapsed ? Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              if (widget.pharmacyImage != null && widget.pharmacyImage!.isNotEmpty)
+                                Container(
+                                  width: 28,
+                                  height: 28,
+                                  margin: const EdgeInsets.only(right: 8),
+                                  decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.white,
                                   ),
-                                  _buildList(
-                                    isDark: isDark,
-                                    isEmpty: provider.filteredDoctors.isEmpty,
-                                    emptyMsg: 'No doctors found',
-                                    emptyIcon: Icons.person_outline_rounded,
-                                    itemCount: provider.filteredDoctors.length,
-                                    itemBuilder: (i) => PharmacyDoctorCard(
-                                      doctor: provider.filteredDoctors[i],
+                                  child: ClipOval(
+                                    child: CachedNetworkImage(
+                                      imageUrl: widget.pharmacyImage!,
+                                      fit: BoxFit.cover,
                                     ),
                                   ),
-                                  _buildList(
-                                    isDark: isDark,
-                                    isEmpty: provider.filteredServices.isEmpty,
-                                    emptyMsg: 'No services found',
-                                    emptyIcon: Icons.medical_services_outlined,
-                                    itemCount: provider.filteredServices.length,
-                                    itemBuilder: (i) => PharmacyServiceCard(
-                                      service: provider.filteredServices[i],
-                                    ),
+                                ),
+                              Flexible(
+                                child: Text(
+                                  widget.pharmacyName,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: -0.2,
                                   ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ) : null,
+                          background: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Theme.of(context).colorScheme.primary,
+                                  Theme.of(context).colorScheme.primaryContainer
                                 ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
                               ),
                             ),
-                          ],
+                            child: SafeArea(
+                              bottom: false,
+                              child: Padding(
+                                padding: const EdgeInsets.fromLTRB(16, 50, 16, 20),
+                                child: _buildHeaderContent(isCollapsed: isCollapsed),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: _buildFlashSaleBanner(),
+                  ),
+                  SliverToBoxAdapter(
+                    child: _buildSearchBar(provider, isDark),
+                  ),
+                  SliverPersistentHeader(
+                    pinned: true,
+                    delegate: _SliverAppBarDelegate(
+                      _buildTabBar(isDark),
+                    ),
+                  ),
+                ];
+              },
+              body: TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildList(
+                    isDark: isDark,
+                    isEmpty: provider.filteredMedicines.isEmpty,
+                    emptyMsg: 'No medicines found',
+                    emptyIcon: Icons.medication_outlined,
+                    itemCount: provider.filteredMedicines.length,
+                    itemBuilder: (i) {
+                      final pharmacyMed = provider.filteredMedicines[i];
+                      return GestureDetector(
+                        onTap: () {
+                          final medEntity = MedicineEntity(
+                            id: pharmacyMed.id.toString(),
+                            name: pharmacyMed.name,
+                            imageUrl: pharmacyMed.image,
+                            price: pharmacyMed.price,
+                            pharmacyId: widget.pharmacyId,
+                            pharmacyName: widget.pharmacyName,
+                          );
+                          context.push(AppRoutes.medicineDetails, extra: medEntity);
+                        },
+                        child: PharmacyMedicineCard(
+                          medicine: pharmacyMed,
+                          onToggleSave: () async {
+                            await provider.toggleMedicineSaved(pharmacyMed.id);
+                            if (context.mounted) {
+                              ref.read(savedItemsProvider).fetchSavedItems(silent: true);
+                            }
+                          },
+                          onToggleNotify: () => provider.toggleMedicineNotify(pharmacyMed.id),
+                          onAddToCart: () async {
+                            await provider.toggleMedicineInCart(pharmacyMed.id);
+                            if (context.mounted) {
+                              ref.read(cartProvider).loadCartPharmacies();
+                              if (pharmacyMed.inCart) {
+                                _showAddedToCart(pharmacyMed.name);
+                              } else {
+                                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                              }
+                            }
+                          },
                         ),
-                ),
-              ],
+                      );
+                    },
+                  ),
+                  _buildList(
+                    isDark: isDark,
+                    isEmpty: provider.filteredDoctors.isEmpty,
+                    emptyMsg: 'No doctors found',
+                    emptyIcon: Icons.person_outline_rounded,
+                    itemCount: provider.filteredDoctors.length,
+                    itemBuilder: (i) => PharmacyDoctorCard(
+                      doctor: provider.filteredDoctors[i],
+                    ),
+                  ),
+                  _buildList(
+                    isDark: isDark,
+                    isEmpty: provider.filteredServices.isEmpty,
+                    emptyMsg: 'No services found',
+                    emptyIcon: Icons.medical_services_outlined,
+                    itemCount: provider.filteredServices.length,
+                    itemBuilder: (i) => PharmacyServiceCard(
+                      service: provider.filteredServices[i],
+                    ),
+                  ),
+                ],
+              ),
             );
           },
         ),
@@ -215,153 +332,101 @@ class _PharmacyScreenState extends ConsumerState<PharmacyScreen>
   // ──────────────────────────────────────────────────────────
   // HEADER
   // ──────────────────────────────────────────────────────────
-  Widget _buildHeader(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Theme.of(context).colorScheme.primary, Theme.of(context).colorScheme.primaryContainer],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
-          child: Column(
+  Widget _buildHeaderContent({required bool isCollapsed}) {
+    return AnimatedOpacity(
+      duration: const Duration(milliseconds: 200),
+      opacity: isCollapsed ? 0.0 : 1.0,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Row(
             children: [
-              // Top row — back + bookmark
-              Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: const Icon(Icons.arrow_back,
-                          color: Colors.white, size: 28),
+              // Avatar
+              Container(
+                width: 82,
+                height: 82,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white,
+                  border: Border.all(color: Colors.white, width: 4),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.12),
+                      blurRadius: 14,
                     ),
-                  ),
-                  const Spacer(),
-                  // 🚀 زرار الـ Save الجديد والمربوط بالـ API
-                  Consumer(builder: (context, ref, child) {
-                    final provider = ref.watch(pharmacyProvider);
-                    return GestureDetector(
-                      onTap: () async {
-                        // 🚀 لما بتدوس، بينادي دالة الحفظ في البروفايدر
-                        await provider.togglePharmacySave();
-                        if (context.mounted) {
-                          // 🚀 بنقول لصفحة المحفوظات تحدث بياناتها في الخلفية من غير ما تظهر لودينج
-                          ref
-                              .watch(savedItemsProvider)
-                              .fetchSavedItems(silent: true);
-                        }
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Icon(
-                            // شكل الأيقونة بيتغير: مقفولة لو محفوظة، ومفتوحة لو لأ
-                            provider.isPharmacySaved
-                                ? Icons.bookmark_rounded
-                                : Icons.bookmark_border_rounded,
-                            color: Colors.white,
-                            size: 28),
-                      ),
-                    );
-                  }),
-                ],
+                  ],
+                ),
+                child: ClipOval(
+                  child: widget.pharmacyImage != null &&
+                          widget.pharmacyImage!.isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: widget.pharmacyImage!,
+                          fit: BoxFit.cover,
+                          fadeInDuration: Duration.zero,
+                          fadeOutDuration: Duration.zero,
+                          memCacheWidth: 160,
+                          placeholder: (context, url) => Icon(
+                              Icons.local_pharmacy_rounded,
+                              size: 42,
+                              color: Theme.of(context).colorScheme.primary),
+                          errorWidget: (context, url, error) => Icon(
+                              Icons.local_pharmacy_rounded,
+                              size: 42,
+                              color: Theme.of(context).colorScheme.primary),
+                        )
+                      : Icon(Icons.local_pharmacy_rounded,
+                          size: 42, color: Theme.of(context).colorScheme.primary),
+                ),
               ),
-              const SizedBox(height: 16),
-              // Info row — avatar + name
-              Row(
-                children: [
-                  // Avatar
-                  Container(
-                    width: 82,
-                    height: 82,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white,
-                      border: Border.all(color: Colors.white, width: 4),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.12),
-                          blurRadius: 14,
-                        ),
-                      ],
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.pharmacyName,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.3,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    child: ClipOval(
-                      child: widget.pharmacyImage != null &&
-                              widget.pharmacyImage!.isNotEmpty
-                          ? CachedNetworkImage(
-                              imageUrl: widget.pharmacyImage!,
-                              fit: BoxFit.cover,
-                              fadeInDuration: Duration.zero,
-                              fadeOutDuration: Duration.zero,
-                              memCacheWidth: 160,
-                              placeholder: (context, url) => Icon(
-                                  Icons.local_pharmacy_rounded,
-                                  size: 42,
-                                  color: Theme.of(context).colorScheme.primary),
-                              errorWidget: (context, url, error) => Icon(
-                                  Icons.local_pharmacy_rounded,
-                                  size: 42,
-                                  color: Theme.of(context).colorScheme.primary),
-                            )
-                          : Icon(Icons.local_pharmacy_rounded,
-                              size: 42, color: Theme.of(context).colorScheme.primary),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    const SizedBox(height: 8),
+                    Row(
                       children: [
-                        Text(
-                          widget.pharmacyName,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 19,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.3,
+                        // Open badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.22),
+                            borderRadius: BorderRadius.circular(20),
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            // Open badge
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.22),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.circle,
-                                      size: 7, color: Colors.white),
-                                  SizedBox(width: 4),
-                                  Text('Open Now',
-                                      style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 11.5,
-                                          fontWeight: FontWeight.w600)),
-                                ],
-                              ),
-                            ),
-                          ],
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.circle,
+                                  size: 8, color: Colors.white),
+                              SizedBox(width: 6),
+                              Text('Open Now',
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600)),
+                            ],
+                          ),
                         ),
                       ],
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),
-        ),
+        ],
       ),
     );
   }
@@ -617,3 +682,29 @@ class _PharmacyScreenState extends ConsumerState<PharmacyScreen>
     );
   }
 }
+
+class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
+  _SliverAppBarDelegate(this._tabBar);
+
+  final Widget _tabBar;
+
+  @override
+  double get minExtent => 48.0; 
+  @override
+  double get maxExtent => 48.0;
+
+  @override
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      color: Theme.of(context).scaffoldBackgroundColor, 
+      child: _tabBar,
+    );
+  }
+
+  @override
+  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
+    return false;
+  }
+}
+

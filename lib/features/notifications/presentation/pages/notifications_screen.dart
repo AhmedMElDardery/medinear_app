@@ -1,24 +1,12 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:medinear_app/core/di/global_providers.dart';
+import 'package:medinear_app/core/widgets/custom_app_bar.dart';
 
-import '../../data/datasources/notifications_remote_data_source.dart';
-import '../../data/repositories/notifications_repository_impl.dart';
-import '../../domain/usecases/get_notifications_usecase.dart';
-import '../manager/notifications_provider.dart';
 import '../widgets/notification_item_widget.dart';
 
-// ✅ AutoDispose provider defined at file scope for Riverpod
-final notificationsProvider =
-    ChangeNotifierProvider.autoDispose<NotificationsProvider>((ref) {
-  return NotificationsProvider(
-    getNotificationsUseCase: GetNotificationsUseCase(
-      NotificationsRepositoryImpl(
-        remoteDataSource: NotificationsRemoteDataSource(),
-      ),
-    ),
-  );
-});
+// The notificationsProvider is now defined in global_providers.dart
 
 class NotificationsScreen extends ConsumerWidget {
   const NotificationsScreen({super.key});
@@ -68,18 +56,28 @@ class NotificationsScreen extends ConsumerWidget {
                           pinned: true,
                           leading: Padding(
                             padding: const EdgeInsets.only(left: 8.0),
-                            child: BackButton(color: theme.textTheme.bodyLarge?.color),
+                            child: CustomBackButton(color: theme.textTheme.bodyLarge?.color),
                           ),
                           expandedHeight: 120,
-                          flexibleSpace: FlexibleSpaceBar(
-                            titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
-                            title: Text(
-                              'Notifications',
-                              style: TextStyle(
-                                color: theme.textTheme.bodyLarge?.color,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 24,
-                                letterSpacing: -0.5,
+                          flexibleSpace: ClipRect(
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                              child: Container(
+                                color: isDark 
+                                  ? Colors.black.withValues(alpha: 0.2) 
+                                  : Colors.white.withValues(alpha: 0.2),
+                                child: FlexibleSpaceBar(
+                                  titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
+                                  title: Text(
+                                    'Notifications',
+                                    style: TextStyle(
+                                      color: theme.textTheme.bodyLarge?.color,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 24,
+                                      letterSpacing: -0.5,
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
                           ),

@@ -8,6 +8,7 @@ import '../data/models/chat_model.dart';
 import '../view_models/chats_view_model.dart';
 // ✅ Widgets - التعديل الأهم: الملف الآن موجود داخل مجلد الـ widgets الخاص بالـ chat
 import 'widgets/chat_list_item.dart';
+import 'package:medinear_app/core/widgets/custom_app_bar.dart';
 
 class ArchivedChatsView extends ConsumerStatefulWidget {
   final ChatsViewModel viewModel;
@@ -49,21 +50,9 @@ class _ArchivedChatsViewState extends ConsumerState<ArchivedChatsView> {
     return Scaffold(
       // ✅ حل مشكلة البياض المستفز: الخلفية الآن مربوطة بـ AppColors.darkBackground تلقائياً
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        // استخدام ألوان الـ AppBarTheme لضمان التناسق مع باقي المشروع
+      appBar: CustomAppBar(
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-        elevation: 0,
-        leading: IconButton(
-          // أيقونة الرجوع تتلون تلقائياً (أسود صريح / أبيض صريح)
-          icon: Icon(Icons.arrow_back,
-              color: Theme.of(context).colorScheme.primary),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text('Archived Chats',
-            style: TextStyle(
-                color: Theme.of(context).colorScheme.primary,
-                fontWeight: FontWeight.bold)),
-        centerTitle: true,
+        title: 'Archived Chats',
       ),
       body: ListenableBuilder(
         listenable: widget.viewModel,

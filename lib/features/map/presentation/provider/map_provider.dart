@@ -18,6 +18,10 @@ class MapProvider extends ChangeNotifier {
   List<PharmacyEntity> pharmacies = [];
   String? selectedPharmacyId;
 
+  // 🚀 Cached markers and circles to prevent heavy rebuilds
+  Set<Marker> cachedMarkers = {};
+  Set<Circle> cachedCircles = {};
+
   bool isMedicineSearch =
       true; // true = بحث عن دواء | false = بحث عن اسم صيدلية
   bool showSuggestions = false;
@@ -27,6 +31,7 @@ class MapProvider extends ChangeNotifier {
 
   // 🚀 بنحفظ آخر كلمة بحث عشان لو اليوزر بدل النوع (دواء/صيدلية) نبحث بيها فوراً
   String lastQuery = "";
+  int? lastMedicineId; // 🆕 الـ ID الحقيقي للدواء المبحوث عنه
 
   final Completer<GoogleMapController> mapController =
       Completer<GoogleMapController>();
@@ -108,6 +113,7 @@ class MapProvider extends ChangeNotifier {
       debugPrint("Load Initial Pharmacies Error: $e");
     } finally {
       isLoading = false;
+      _updateMapOverlays();
       notifyListeners();
     }
   }
@@ -175,7 +181,10 @@ class MapProvider extends ChangeNotifier {
   // 🚀 4. البحث المطور (دواء أو اسم صيدلية)
   Future<void> search(String query) async {
     lastQuery = query.trim();
+    // 🆕 لو الـ query رقم، يبقى هو medicine_id
+    lastMedicineId = int.tryParse(lastQuery);
     if (lastQuery.isEmpty) {
+      lastMedicineId = null;
       await loadInitialPharmacies();
       return;
     }
@@ -209,6 +218,7 @@ class MapProvider extends ChangeNotifier {
       pharmacies = [];
     } finally {
       isLoading = false;
+      _updateMapOverlays();
       notifyListeners();
     }
   }
@@ -224,6 +234,7 @@ class MapProvider extends ChangeNotifier {
   // اختيار صيدلية والتحرك إليها
   void selectPharmacy(String id) async {
     selectedPharmacyId = id;
+    _updateMapOverlays();
     notifyListeners();
     try {
       final p = pharmacies.firstWhere((element) => element.id == id);
@@ -245,37 +256,47 @@ class MapProvider extends ChangeNotifier {
     }
   }
 
-  // مخرجات الخريطة (Markers & Circles)
-  Set<Marker> getMarkers(Color primaryColor) => pharmacies
-      .map((p) => Marker(
-            markerId: MarkerId(p.id),
-            position: LatLng(p.lat, p.lng),
-            icon: BitmapDescriptor.defaultMarkerWithHue(
-                p.id == selectedPharmacyId
-                    ? BitmapDescriptor.hueRed 
-                    : BitmapDescriptor.hueRed),
-            infoWindow: InfoWindow(title: p.name, snippet: p.address),
-            onTap: () => selectPharmacy(p.id),
-          ))
-      .toSet();
+  // تحديث الـ Markers و Circles المخزنة
+  void _updateMapOverlays() {
+    // استخدم لون ثابت لتجنب الاعتماد على الـ Theme هنا
+    const primaryColor = Color(0xFF00965E); 
 
-  Set<Circle> getCircles(Color primaryColor) {
-    if (selectedPharmacyId == null || pharmacies.isEmpty) return {};
-    try {
-      final p =
-          pharmacies.firstWhere((element) => element.id == selectedPharmacyId);
-      return {
-        Circle(
-          circleId: CircleId(p.id),
-          center: LatLng(p.lat, p.lng),
-          radius: 400, // مسافة مناسبة بصرياً
-          strokeWidth: 2,
-          strokeColor: primaryColor,
-          fillColor: primaryColor.withValues(alpha: 0.15),
-        )
-      };
-    } catch (e) {
-      return {};
+    cachedMarkers = pharmacies
+        .map((p) => Marker(
+              markerId: MarkerId(p.id),
+              position: LatLng(p.lat, p.lng),
+              icon: BitmapDescriptor.defaultMarkerWithHue(
+                  p.id == selectedPharmacyId
+                      ? BitmapDescriptor.hueRed
+                      : BitmapDescriptor.hueRed),
+              infoWindow: InfoWindow(title: p.name, snippet: p.address),
+              onTap: () => selectPharmacy(p.id),
+            ))
+        .toSet();
+
+    if (selectedPharmacyId == null || pharmacies.isEmpty) {
+      cachedCircles = {};
+    } else {
+      try {
+        final p = pharmacies
+            .firstWhere((element) => element.id == selectedPharmacyId);
+        cachedCircles = {
+          Circle(
+            circleId: CircleId(p.id),
+            center: LatLng(p.lat, p.lng),
+            radius: 400,
+            strokeWidth: 2,
+            strokeColor: primaryColor,
+            fillColor: primaryColor.withValues(alpha: 0.15),
+          )
+        };
+      } catch (e) {
+        cachedCircles = {};
+      }
     }
   }
+
+  // مخرجات الخريطة (Markers & Circles)
+  Set<Marker> getMarkers() => cachedMarkers;
+  Set<Circle> getCircles() => cachedCircles;
 }

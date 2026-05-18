@@ -224,11 +224,20 @@ class PharmacyCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: Icon(
-                      Icons.add_shopping_cart_outlined,
-                      color: Theme.of(context).colorScheme.primary,
-                      size: 20,
-                    ),
+                    child: onAddToCart == null
+                        ? SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          )
+                        : Icon(
+                            Icons.add_shopping_cart_outlined,
+                            color: Theme.of(context).colorScheme.primary,
+                            size: 20,
+                          ),
                   ),
                 ),
               ),

@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:medinear_app/core/di/global_providers.dart';
 import 'package:go_router/go_router.dart';
 import 'package:medinear_app/core/localization/translate_helper.dart';
+import 'package:medinear_app/core/widgets/custom_app_bar.dart';
 
 class CategoriesScreen extends ConsumerWidget {
   const CategoriesScreen({super.key});
@@ -15,22 +16,9 @@ class CategoriesScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
+      appBar: CustomAppBar(
         backgroundColor: Theme.of(context).cardColor,
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          icon: Icon(Directionality.of(context) == TextDirection.rtl ?  Icons.arrow_forward_ios_rounded : Icons.arrow_back_ios_new_rounded , color: Theme.of(context).textTheme.bodyLarge?.color, size: 20),
-          onPressed: () => context.pop(),
-        ),
-        title: Text(
-          context.tr("all_categories"),
-          style: TextStyle(
-            color: Theme.of(context).textTheme.bodyLarge?.color,
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
-        ),
+        title: context.tr("all_categories"),
       ),
       body: provider.isLoading 
           ? Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary))

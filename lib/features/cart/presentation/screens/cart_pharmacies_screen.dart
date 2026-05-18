@@ -5,6 +5,7 @@ import 'package:medinear_app/features/cart/presentation/manager/cart_provider.da
 import 'package:medinear_app/core/widgets/app_shimmer.dart';
 import 'package:medinear_app/core/widgets/custom_empty_state.dart';
 import 'my_cart_screen.dart';
+import 'package:medinear_app/core/widgets/custom_app_bar.dart';
 
 class CartPharmaciesScreen extends ConsumerStatefulWidget {
   const CartPharmaciesScreen({super.key});
@@ -39,13 +40,9 @@ class _CartPharmaciesScreenState extends ConsumerState<CartPharmaciesScreen> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: Text("Cart",
-            style: TextStyle(color: textColor, fontWeight: FontWeight.bold)),
-        centerTitle: true,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: IconThemeData(color: textColor),
+      appBar: CustomAppBar(
+        showBackButton: false,
+        title: "Cart",
       ),
       body: Consumer(
         builder: (context, ref, child) {
